@@ -1,0 +1,99 @@
+import 'package:flutter/material.dart';
+
+class Post extends StatelessWidget {
+  final String username;
+  final Image img;
+  final likes = 0;
+  final dislikes = 0;
+  String date;
+  Post({@required this.username, @required this.img}) {
+    this.date = DateTime.now().toString();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.all(15.0),
+      padding: const EdgeInsets.all(3.0),
+      decoration: BoxDecoration(border: Border.all(color: Colors.blueAccent)),
+      height: 425,
+      child: Column(
+        children: [
+          Text(username + "\nPosted at " + date + "\n"),
+          Expanded(child: img),
+          Row(
+            children: [
+              IconButton(icon: Icon(Icons.thumb_up), onPressed: null),
+              Text(likes.toString()),
+              IconButton(icon: Icon(Icons.thumb_down), onPressed: null),
+              Text(dislikes.toString()),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class FriendPost extends StatelessWidget {
+  final String username;
+  final String path;
+  int likes = 0;
+  int dislikes = 0;
+  bool likeFlag = true;
+  bool dislikeFlag = true;
+  String date = DateTime.now().toString();
+  FriendPost({@required this.username, @required this.path});
+
+  void addLikes() {
+    likes += 1;
+    likeFlag = false;
+  }
+
+  void removeLikes() {
+    likes -= 1;
+    likeFlag = true;
+  }
+
+  void addDislikes() {
+    dislikes += 1;
+    dislikeFlag = false;
+  }
+
+  void removeDislikes() {
+    dislikes -= 1;
+    dislikeFlag = true;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+        margin: const EdgeInsets.all(15.0),
+        padding: const EdgeInsets.all(3.0),
+        //decoration: BoxDecoration(border: Border.all(color: Colors.blueAccent)),
+        height: 425,
+        width: 300,
+        child: Column(
+          children: [
+            Text(username + "\nPosted at " + date + "\n"),
+            Expanded(
+                child: Container(
+                    height: 320,
+                    width: 200,
+                    child: Image(image: AssetImage(path)))),
+            Row(
+              children: [
+                IconButton(
+                    icon: Icon(Icons.thumb_up),
+                    onPressed: likeFlag ? addLikes : removeLikes),
+                Text(likes.toString()),
+                IconButton(
+                    icon: Icon(Icons.thumb_down),
+                    onPressed: dislikeFlag ? addDislikes : removeDislikes),
+                Text(dislikes.toString()),
+              ],
+            ),
+          ],
+        ));
+  }
+}
