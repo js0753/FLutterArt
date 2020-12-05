@@ -1,26 +1,21 @@
-import 'package:fanart/takePic.dart';
 import 'package:flutter/material.dart';
-import 'dart:io';
-import 'package:camera/camera.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:fanart/posts.dart';
 import 'package:fanart/home.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
+import 'package:firebase_database/firebase_database.dart';
+import 'package:fanart/uploadImage.dart';
+import 'dart:io';
+
+FirebaseDatabase database = FirebaseDatabase.instance;
+DatabaseReference myRef = database.reference();
+DatabaseReference postRef = myRef.child('posts');
 
 class Profile extends StatefulWidget {
   final String username;
   final String user;
-  final CameraDescription camera;
-  final List<Widget> posts;
-  final List<Widget> homePosts;
-  Profile(this.username, this.user, this.camera, this.posts, this.homePosts);
+  Profile(this.username, this.user);
   @override
-  ProfileState createState() => ProfileState(
-        username,
-        user,
-        camera,
-        posts,
-      );
+  ProfileState createState() => ProfileState();
 }
 
 class ProfileState extends State<Profile> with TickerProviderStateMixin {
@@ -31,16 +26,31 @@ class ProfileState extends State<Profile> with TickerProviderStateMixin {
   String header;
   bool isOpen;
   bool menuOn;
-  CameraDescription camera;
-  List<Widget> posts = new List();
-
   var myAnimation;
-  ProfileState(this.username, this.user, this.camera, this.posts) {
-    header = user == username ? "My Profile" : user + "'s Profile";
+  List<Widget> posts = new List();
+  ProfileState() {
     isOpen = false;
     menuOn = false;
     myAnimation = AnimationController(
         duration: const Duration(milliseconds: 300), vsync: this);
+    if (posts.length == 0) {
+      postRef.once().then((DataSnapshot snapshot) {
+        setState(() {});
+        List<dynamic> values = snapshot.value;
+        print(values.toString());
+
+        for (Map x in values) {
+          print("Hey" + x.toString());
+          if (x['posterid'] == '1') {
+            posts.add(GridPost(
+              username: 'user1',
+              img: Image.network(x['ImagePath']),
+            ));
+          }
+        }
+      });
+    }
+    ;
   }
 
   void newPostOptions() {}
@@ -70,11 +80,11 @@ class ProfileState extends State<Profile> with TickerProviderStateMixin {
       onWillPop: () => Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (context) => Home("user1", widget.camera, posts),
+          builder: (context) => Home(),
         ),
       ),
       child: MaterialApp(
-          title: header,
+          title: widget.user,
           theme: ThemeData(
             primarySwatch: Colors.teal,
             visualDensity: VisualDensity.adaptivePlatformDensity,
@@ -92,7 +102,7 @@ class ProfileState extends State<Profile> with TickerProviderStateMixin {
               backgroundColor: Colors.teal[200],
               title: new Center(
                   child: Text(
-                header,
+                'user1',
                 style: TextStyle(
                     fontFamily: 'ComicNeue',
                     fontSize: 15.0,
@@ -112,7 +122,7 @@ class ProfileState extends State<Profile> with TickerProviderStateMixin {
           SizedBox(
             height: 15,
           ),
-          Text(username + "'s Artbook ",
+          Text(widget.username + "'s Artbook ",
               style: TextStyle(
                   fontFamily: 'ComicNeue',
                   fontSize: 15.0,
@@ -124,17 +134,19 @@ class ProfileState extends State<Profile> with TickerProviderStateMixin {
           ),
           Expanded(
             child: Container(
-              child: StaggeredGridView.countBuilder(
-                crossAxisCount: 4,
-                itemCount: posts.length,
-                itemBuilder: (BuildContext context, int index) {
-                  return posts[posts.length - index - 1];
-                },
-                staggeredTileBuilder: (int index) =>
-                    new StaggeredTile.count(2, index.isEven ? 3 : 3),
-                mainAxisSpacing: 4.0,
-                crossAxisSpacing: 4.0,
-              ),
+              child: posts.length != 0
+                  ? StaggeredGridView.countBuilder(
+                      crossAxisCount: 4,
+                      itemCount: posts.length,
+                      itemBuilder: (BuildContext context, int index) {
+                        return posts[posts.length - index - 1];
+                      },
+                      staggeredTileBuilder: (int index) =>
+                          new StaggeredTile.count(2, index.isEven ? 3 : 3),
+                      mainAxisSpacing: 4.0,
+                      crossAxisSpacing: 4.0,
+                    )
+                  : Container(),
             ),
           ),
         ]),
@@ -163,17 +175,8 @@ class ProfileState extends State<Profile> with TickerProviderStateMixin {
                       tooltip: 'Click from Camera',
                       icon: Icon(Icons.add_a_photo),
                       onPress: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => TakePictureScreen(
-                              camera: camera,
-                              username: username,
-                              posts: posts,
-                              homePosts: widget.homePosts,
-                            ),
-                          ),
-                        );
+                        Uploader.imgFromCam();
+                        setState(() {});
                       }),
                   SizedBox(
                     height: 10,
@@ -181,7 +184,11 @@ class ProfileState extends State<Profile> with TickerProviderStateMixin {
                   CircleIconButton(
                       tooltip: 'Upload from Gallery',
                       icon: Icon(Icons.add_photo_alternate),
-                      onPress: _imgFromGallery),
+                      onPress: () {
+                        setState(() {
+                          Uploader.imgFromGallery();
+                        });
+                      }),
                   SizedBox(
                     height: 10,
                   ),
@@ -193,16 +200,6 @@ class ProfileState extends State<Profile> with TickerProviderStateMixin {
               )),
         ),
       );
-
-  _imgFromGallery() async {
-    File image = await ImagePicker.pickImage(
-        source: ImageSource.gallery, imageQuality: 50);
-
-    setState(() {
-      img = Image.file(image);
-      posts.add(new Post(username: username, img: img));
-    });
-  }
 }
 
 class CircleIconButton extends StatelessWidget {

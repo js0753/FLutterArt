@@ -1,30 +1,20 @@
-import 'package:fanart/takePic.dart';
+//import 'package:fanart/takePic.dart';
 import 'package:flutter/material.dart';
-import 'dart:io';
 import 'package:camera/camera.dart';
-import 'package:image_picker/image_picker.dart';
 import 'profile_page.dart';
 import 'package:fanart/posts.dart';
-import 'package:firebase_storage/firebase_storage.dart';
 import 'package:firebase_database/firebase_database.dart';
-import 'package:firebase_core/firebase_core.dart';
+import 'package:fanart/uploadImage.dart';
 
 FirebaseDatabase database = FirebaseDatabase.instance;
 DatabaseReference myRef = database.reference();
 DatabaseReference postRef = myRef.child('posts');
 
 class Home extends StatefulWidget {
-  final String username;
-  final List<Widget> userPosts;
-  final CameraDescription camera;
+  static String id = 'home';
 
-  Home(this.username, this.camera, this.userPosts);
   @override
-  HomeState createState() => HomeState(
-        username,
-        camera,
-        userPosts,
-      );
+  HomeState createState() => HomeState();
 }
 
 class HomeState extends State<Home> {
@@ -37,30 +27,24 @@ class HomeState extends State<Home> {
   CameraDescription camera;
   List<Widget> homePosts = new List();
   List<Widget> userPosts;
-  HomeState(this.username, this.camera, this.userPosts) {
-    header = username;
+  HomeState() {
+    header = 'user1';
     isOpen = false;
     menuOn = false;
 
     if (homePosts.length == 0) {
       postRef.once().then((DataSnapshot snapshot) {
         setState(() {});
-        var x = snapshot.value;
         List<dynamic> values = snapshot.value;
         int counter = 0;
         for (Map x in values) {
           String temp = 'posts/' + counter.toString();
-          addPost(refPath: temp);
+          homePosts.add(FriendPost(ref: temp));
           counter += 1;
         }
-        ;
       });
     }
-  }
-
-  void addPost({String refPath}) {
-    print("Ref path is : " + refPath);
-    homePosts.add(FriendPost(ref: refPath));
+    ;
   }
 
   @override
@@ -128,31 +112,35 @@ class HomeState extends State<Home> {
                           tooltip: 'Click from Camera',
                           icon: Icon(Icons.add_a_photo),
                           onPressed: () {
+                            Uploader.imgFromCam();
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (context) => TakePictureScreen(
-                                  username: username,
-                                  camera: camera,
-                                  posts: userPosts,
-                                  homePosts: homePosts,
-                                ),
+                                builder: (context) => Profile("user1", "user1"),
                               ),
                             );
                           }),
                       IconButton(
                           tooltip: 'Upload from Gallery',
                           icon: Icon(Icons.add_photo_alternate),
-                          onPressed: _imgFromGallery),
+                          onPressed: () {
+                            Uploader.imgFromGallery();
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => Profile("user1", "user1"),
+                              ),
+                            );
+                          }),
                       IconButton(
-                          icon: Icon(Icons.person),
-                          onPressed: () => Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => Profile("user1",
-                                      "user1", camera, userPosts, homePosts),
-                                ),
-                              )),
+                        icon: Icon(Icons.person),
+                        onPressed: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => Profile('user1', 'user1'),
+                          ),
+                        ),
+                      )
                     ],
                   ),
                 ),
@@ -160,18 +148,5 @@ class HomeState extends State<Home> {
             ),
           )
         ]));
-  }
-
-  _imgFromGallery() async {
-    File image = await ImagePicker.pickImage(
-        source: ImageSource.gallery, imageQuality: 50);
-    userPosts.add(new Post(username: username, img: Image.file(image)));
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) =>
-            Profile("user1", "user1", camera, userPosts, homePosts),
-      ),
-    );
   }
 }

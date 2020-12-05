@@ -1,31 +1,58 @@
 import 'package:flutter/material.dart';
-import 'home.dart';
-import 'package:camera/camera.dart';
-//import 'dart:async';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:fanart/login.dart';
+import 'package:fanart/home.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'dart:async';
 
-void main() async {
-  // Ensure that plugin services are initialized so that `availableCameras()`
-  // can be called before `runApp()`
-  WidgetsFlutterBinding.ensureInitialized();
-
-  // Obtain a list of the available cameras on the device.
-  final cameras = await availableCameras();
-
-  // Get a specific camera from the list of available cameras.
-  final firstCamera = cameras.first;
-
-  runApp(MyApp(firstCamera));
+void main() {
+  runApp(MyApp());
 }
 
+/*
+bool isLoggedIn() {
+  bool flag;
+  final _auth = FirebaseAuth.instance;
+  while (flag == null)
+    _auth.authStateChanges().listen((User user) {
+      if (user == null) {
+        print('User is currently signed out!');
+        flag = false;
+      } else {
+        print('User is signed in!');
+        flag = true;
+      }
+    });
+
+  print("Flag = " + flag.toString());
+  return flag;
+}
+*/
 class MyApp extends StatelessWidget {
   // This widget is the root of your application.
-  final CameraDescription camera;
-  MyApp(this.camera);
+
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'FanArt Demo',
-      home: Home("user1", camera, new List()),
+    return FutureBuilder(
+      future: Firebase.initializeApp(),
+      builder: (context, snapshot) {
+        // Check for errors
+        if (snapshot.hasError) {
+          return Container(
+            child: Text("Something Went Wrong"),
+          );
+        }
+
+        // Once complete, show your application
+        if (snapshot.connectionState == ConnectionState.done) {
+          return MaterialApp(title: 'FanArt Demo', home: Login(), routes: {
+            Home.id: (context) => Home(),
+          });
+        }
+
+        // Otherwise, show something whilst waiting for initialization to complete
+        return Container();
+      },
     );
   }
 }

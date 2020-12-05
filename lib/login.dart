@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:modal_progress_hud/modal_progress_hud.dart';
+import 'home.dart';
 
 class Login extends StatefulWidget {
   @override
@@ -8,44 +9,73 @@ class Login extends StatefulWidget {
 }
 
 class _LoginState extends State<Login> {
-  final _formKey = GlobalKey<FormState>();
+  String email, pass;
   bool reg = false;
+  bool s = false;
   String btnText = "Login";
   final _auth = FirebaseAuth.instance;
   @override
   Widget build(BuildContext context) {
-    return Form(
-      key: _formKey,
+    return Scaffold(
+        body: ModalProgressHUD(
+      inAsyncCall: s,
       child: Column(
         children: [
-          TextFormField(
-            validator: (value) {
-              if (value.isEmpty) {
-                return 'Enter a valid Username';
-              }
-              return null;
-            },
+          SizedBox(
+            height: 150,
           ),
-          TextFormField(
-            validator: (value) {
-              if (value.isEmpty) {
-                return 'Enter a valid Password';
-              }
-              return null;
+          TextField(
+            keyboardType: TextInputType.emailAddress,
+            onChanged: (value) {
+              email = value;
             },
+            textAlign: TextAlign.center,
+            decoration: InputDecoration(
+              hintText: 'Enter your Email',
+            ),
+          ),
+          TextField(
+            obscureText: true,
+            onChanged: (value) {
+              pass = value;
+            },
+            textAlign: TextAlign.center,
+            decoration: InputDecoration(
+              hintText: 'Enter your Password',
+            ),
           ),
           if (reg)
-            TextFormField(
-              validator: (value) {
-                if (value.isEmpty) {
-                  return 'Re-enter a valid Password';
-                }
-                return null;
+            TextField(
+              obscureText: true,
+              onChanged: (value) {
+                if (value != pass) print("Password Not Matching");
               },
+              textAlign: TextAlign.center,
+              decoration: InputDecoration(
+                hintText: 'Re-enter your Password',
+              ),
             ),
           ElevatedButton(
-              onPressed: () {
-                if (_formKey.currentState.validate()) {}
+              onPressed: () async {
+                setState(() {
+                  s = true;
+                });
+                try {
+                  if (reg == true) {
+                    await _auth.createUserWithEmailAndPassword(
+                        email: email, password: pass);
+                  }
+                  final user = await _auth.signInWithEmailAndPassword(
+                      email: email, password: pass);
+                  if (user != null) {
+                    Navigator.pushNamed(context, Home.id);
+                  }
+                  setState(() {
+                    s = false;
+                  });
+                } catch (e) {
+                  print(e);
+                }
               },
               child: Text(btnText)),
           TextButton(
@@ -58,6 +88,6 @@ class _LoginState extends State<Login> {
               child: Text("New ? Register Here!"))
         ],
       ),
-    );
+    ));
   }
 }

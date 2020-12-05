@@ -6,7 +6,7 @@ DateFormat dtformat = DateFormat("yy-MM-dd hh:mm");
 FirebaseDatabase database = FirebaseDatabase.instance;
 DatabaseReference myRef = database.reference();
 
-class Post extends StatefulWidget {
+class GridPost extends StatefulWidget {
   final String username;
   final Image img;
   //final String date = dtformat.format(DateTime.now());
@@ -14,48 +14,12 @@ class Post extends StatefulWidget {
   int dislikes = 0;
   bool likeFlag = true;
   bool dislikeFlag = true;
-  Post({@required this.username, @required this.img});
+  GridPost({@required this.username, @required this.img});
   @override
-  PostState createState() => PostState();
+  GridPostState createState() => GridPostState();
 }
 
-class PostState extends State<Post> {
-  void addLikes() {
-    setState(() {
-      widget.likes += 1;
-      if (widget.dislikes != 0) {
-        widget.dislikes -= 1;
-        widget.dislikeFlag = true;
-      }
-    });
-    widget.likeFlag = false;
-  }
-
-  void removeLikes() {
-    setState(() {
-      widget.likes -= 1;
-    });
-    widget.likeFlag = true;
-  }
-
-  void addDislikes() {
-    setState(() {
-      widget.dislikes += 1;
-      if (widget.likes != 0) {
-        widget.likes -= 1;
-        widget.likeFlag = true;
-      }
-    });
-    widget.dislikeFlag = false;
-  }
-
-  void removeDislikes() {
-    setState(() {
-      widget.dislikes -= 1;
-    });
-    widget.dislikeFlag = true;
-  }
-
+class GridPostState extends State<GridPost> {
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -70,29 +34,6 @@ class PostState extends State<Post> {
             child: ClipRRect(
                 borderRadius: BorderRadius.circular(25.0), child: widget.img),
           ),
-          /*
-            Positioned(
-              bottom: 10,
-              child: Text(
-                widget.username + "\n" + widget.date + "\n",
-                style: TextStyle(color: Colors.white),
-              ),
-            ),
-            */
-          //]),
-
-          /*Row(
-            children: [
-              IconButton(
-                  icon: Icon(Icons.thumb_up),
-                  onPressed: widget.likeFlag ? addLikes : removeLikes),
-              Text(likes.toString()),
-              IconButton(
-                  icon: Icon(Icons.thumb_down),
-                  onPressed: widget.dislikeFlag ? addDislikes : removeDislikes),
-              Text(dislikes.toString()),
-            ],
-          ),*/
         ],
       ),
     );
